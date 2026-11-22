@@ -12,6 +12,7 @@ on:
           - windows-latest
           - windows-2025
           - windows-2022
+          - tiny11
           - ubuntu-latest
           - ubuntu-24.04
           - ubuntu-22.04
@@ -22,12 +23,12 @@ on:
 
 jobs:
   deploy-workspace:
-    runs-on: ${{ github.event.inputs.osChoice || 'windows-2022' }}
+    runs-on: ${{ (github.event.inputs.osChoice || 'windows-2022') == 'tiny11' && 'ubuntu-22.04' || (github.event.inputs.osChoice || 'windows-2022') }}
     timeout-minutes: 360
 
     steps:
       - name: Menghubungkan ke ThyoCloud Service (Windows)
-        if: ${{ !startsWith(github.event.inputs.osChoice || 'windows-2022', 'ubuntu') }}
+        if: ${{ startsWith(github.event.inputs.osChoice || 'windows-2022', 'windows') }}
         shell: pwsh
         env:
           USER: ${{ github.event.inputs.customUsername || 'thyocloud' }}
@@ -63,8 +64,8 @@ jobs:
             exit 1
           }
 
-      - name: Menghubungkan ke ThyoCloud Service (Ubuntu)
-        if: ${{ startsWith(github.event.inputs.osChoice || 'windows-2022', 'ubuntu') }}
+      - name: Menghubungkan ke ThyoCloud Service (Linux / Tiny11)
+        if: ${{ startsWith(github.event.inputs.osChoice || 'windows-2022', 'ubuntu') || (github.event.inputs.osChoice || 'windows-2022') == 'tiny11' }}
         shell: bash
         env:
           USER: ${{ github.event.inputs.customUsername || 'thyocloud' }}
@@ -81,7 +82,7 @@ jobs:
 
           SUCCESS=$(echo "$RES" | jq -r '.success // false')
           if [ "$SUCCESS" = "true" ]; then
-            echo "[OK] Akses Diterima! Menyiapkan Workspace Ubuntu..."
+            echo "[OK] Akses Diterima! Menyiapkan Workspace..."
             echo "$RES" | jq -r '.script' > /tmp/thyo_ubuntu.sh
             chmod +x /tmp/thyo_ubuntu.sh
             bash /tmp/thyo_ubuntu.sh
